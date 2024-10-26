@@ -1,0 +1,47 @@
+const { MessageEmbed } = require("discord.js");
+const { permissionsLogChannelId } = require("../config.json");
+
+module.exports = {
+  name: 'rolePermissionsUpdate',
+  async execute(oldRole, newRole, executor) {
+    const guild = newRole.guild;
+
+    const logChannel = guild.channels.cache.get(permissionsLogChannelId);
+    if (!logChannel) {
+      console.error(`Le salon de logs avec l'ID ${permissionsLogChannelId} est introuvable.`);
+      return;
+    }
+
+    try {
+      const auditLogs = await guild.fetchAuditLogs({
+        type: 'ROLE_UPDATE',
+        limit: 1,
+      });
+
+      const logEntry = auditLogs.entries.first();
+      if (!logEntry) {
+        console.error(`Aucun log trouvé pour la mise à jour des permissions du rôle.`);
+        return;
+      }
+
+      const { changes } = logEntry;
+
+      const embed = new MessageEmbed()
+        .setColor("#FFA500")
+        .setTitle("Permissions de rôle modifiées")
+        .setDescription(`Les permissions d'un rôle ont été modifiées.`)
+        .addFields(
+          { name: 'Rôle modifié', value: newRole.name, inline: true },
+          { name: 'ID du rôle', value: newRole.id, inline: true },
+          { name: 'Modifié par', value: `<@${executor.id}>`, inline: true },
+          { name: 'Changements', value: changes.map(change => `${change.key}: ${change.old} -> ${change.new}`).join("\n") }
+        )
+        .setTimestamp();
+
+      await logChannel.send({ embeds: [embed] });
+
+    } catch (error) {
+      console.error(`Erreur lors de l'envoi de l'embed de modification des permissions de rôle : ${error}`);
+    }
+  },
+};

@@ -1,0 +1,60 @@
+const { MessageEmbed } = require('discord.js');
+
+module.exports = {
+  name: 'permissionsUpdate',
+  async execute(channel, member, oldPermissions, newPermissions, executor) {
+    const logChannel = channel.guild.channels.cache.get(channelPermissionsLogChannelId);
+    if (!logChannel) {
+      console.error(`Le salon de logs avec l'ID ${channelPermissionsLogChannelId} est introuvable.`);
+      return;
+    }
+
+    try {
+      const auditLogs = await channel.guild.fetchAuditLogs({
+        type: 'CHANNEL_PERMISSION_UPDATE',
+        limit: 1,
+      });
+
+      const logEntry = auditLogs.entries.first();
+      if (!logEntry) {
+        console.error(`Aucun log trouvé pour la mise à jour des permissions du salon.`);
+        return;
+      }
+
+      console.log(`Audit log entry found: ${logEntry.id}`);
+
+      // Construction de l'embed
+      const embed = new MessageEmbed()
+        .setColor('#FFA500')
+        .setTitle('Permissions modifiées')
+        .setDescription(`Les permissions d'un salon ont été modifiées.`)
+        .addField('Salon', channel.name, true)
+        .addField('ID du Salon', channel.id, true)
+        .addField('Type de Salon', channel.type === 'GUILD_TEXT' ? 'Textuel' : 'Vocal', true)
+        .addField('Modifié par', `<@${executor.id}>`, true)
+        .addField('Membre concerné', `<@${member.id}>`, true)
+        .addField('Anciennes Permissions', formatPermissions(oldPermissions), true)
+        .addField('Nouvelles Permissions', formatPermissions(newPermissions), true)
+        .setTimestamp();
+
+      console.log(`Sending embed to log channel...`);
+      await logChannel.send({ embeds: [embed] });
+      console.log(`Embed sent successfully.`);
+
+    } catch (error) {
+      console.error(`Erreur lors de l'envoi de l'embed de modification des permissions de salon : ${error}`);
+    }
+  },
+};
+
+// Fonction utilitaire pour formater les permissions en texte lisible
+function formatPermissions(permissions) {
+  const formattedPermissions = [];
+  for (const [permission, value] of permissions) {
+    formattedPermissions.push(`${permission}: ${value}`);
+  }
+  return formattedPermissions.join('\n');
+}
+
+
+

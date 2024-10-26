@@ -1,0 +1,57 @@
+const { Events, EmbedBuilder } = require('discord.js');
+
+module.exports = {
+    name: Events.VoiceStateUpdate,
+    async execute(oldState, newState) {
+        const moveChannelId = '1261181853994586132'; // Remplacez par l'ID du salon de logs pour les déplacements
+        const kickChannelId = '1261181817742950531'; // Remplacez par l'ID du salon de logs pour les kicks
+        const guild = newState.guild;
+
+        // Déplacement d'un salon vocal à un autre
+        if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id) {
+            const embed = new EmbedBuilder()
+                .setTitle('Membre déplacé')
+                .setDescription(`${newState.member} a été déplacé de ${oldState.channel} à ${newState.channel}`)
+                .setColor('Blue')
+                .setThumbnail(newState.member.user.displayAvatarURL())
+                .addFields(
+                    { name: 'Utilisateur', value: `${newState.member}`, inline: true },
+                    { name: 'De', value: `${oldState.channel}`, inline: true },
+                    { name: 'À', value: `${newState.channel}`, inline: true },
+                    { name: 'Heure', value: new Date().toLocaleString(), inline: true }
+                );
+
+            const logChannel = guild.channels.cache.get(moveChannelId);
+            if (logChannel) logChannel.send({ embeds: [embed] });
+        }
+
+        // Vérifier si le membre a quitté le salon vocal (kick possible)
+        if (oldState.channel && !newState.channel) {
+            const auditLogs = await guild.fetchAuditLogs({
+                limit: 1,
+                type: 'MEMBER_DISCONNECT',
+            });
+            const kickLog = auditLogs.entries.first();
+
+            if (kickLog && kickLog.target.id === oldState.member.id) {
+                const { executor, target, reason } = kickLog;
+
+                const embed = new EmbedBuilder()
+                    .setTitle('Membre déconnecté (Kick vocal)')
+                    .setDescription(`${target} a été déconnecté de ${oldState.channel} par ${executor}`)
+                    .setColor('Red')
+                    .setThumbnail(target.displayAvatarURL())
+                    .addFields(
+                        { name: 'Utilisateur', value: `${target}`, inline: true },
+                        { name: 'Déconnecté par', value: `${executor}`, inline: true },
+                        { name: 'Raison', value: reason || 'Aucune raison spécifiée', inline: true },
+                        { name: 'Heure', value: new Date().toLocaleString(), inline: true }
+                    );
+
+                const logChannel = guild.channels.cache.get(kickChannelId);
+                if (logChannel) logChannel.send({ embeds: [embed] });
+            }
+        }
+    },
+};
+

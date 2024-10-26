@@ -1,0 +1,53 @@
+const { Events } = require("discord.js");
+const cron = require("node-cron");
+
+module.exports = {
+    name: Events.ClientReady,
+    once: true,
+    async execute(client) {
+        // ID du serveur principal
+        const ID_SERVEUR_PRINCIPAL = '1259473917219962900';
+        // ID du rôle à ajouter/retirer
+        const ID_ROLE = '1279646534933286953';
+        // ID du membre ou du groupe de membres auxquels vous souhaitez ajouter/retirer le rôle
+        const ID_MEMBRE = '853688933946753024'; // Vous pouvez aussi boucler sur plusieurs membres si nécessaire
+
+        // Fonction pour ajouter le rôle
+        const ajouterRole = () => {
+            const guilde = client.guilds.cache.get(ID_SERVEUR_PRINCIPAL);
+            const membre = guilde.members.cache.get(ID_MEMBRE);
+            if (membre && !membre.roles.cache.has(ID_ROLE)) {
+                membre.roles.add(ID_ROLE)
+                    .then(() => console.log(`Rôle ajouté à ${membre.user.tag}`))
+                    .catch(console.error);
+            }
+        };
+
+        // Fonction pour retirer le rôle
+        const retirerRole = () => {
+            const guilde = client.guilds.cache.get(ID_SERVEUR_PRINCIPAL);
+            const membre = guilde.members.cache.get(ID_MEMBRE);
+            if (membre && membre.roles.cache.has(ID_ROLE)) {
+                membre.roles.remove(ID_ROLE)
+                    .then(() => console.log(`Rôle retiré à ${membre.user.tag}`))
+                    .catch(console.error);
+            }
+        };
+
+        // Horaires pour lundi, mardi, jeudi
+        cron.schedule('40 8 * * 1,2', ajouterRole, { timezone: "Europe/Paris" }); //Lundi, Mardi 8H40
+        cron.schedule('30 13 * * 1,2,4', ajouterRole, { timezone: "Europe/Paris" }); //Lundi, Mardi, Jeudi 13H30
+        cron.schedule('33 9 * * 4', ajouterRole, { timezone: "Europe/Paris" }); //Jeudi 9H33
+
+        cron.schedule('26 12 * * 1,2,4', retirerRole, { timezone: "Europe/Paris" }); //Lundi, Mardi, Jeudi 12H26
+        cron.schedule('19 16 * * 1,2,4', retirerRole, { timezone: "Europe/Paris" }); //Lundi, Mardi, Jeudi 16H19
+
+        // Horaires pour mercredi et vendredi
+        cron.schedule('40 8 * * 3,5', ajouterRole, { timezone: "Europe/Paris" }); //Mercredi, Vendredi 8H40
+        
+        cron.schedule('0 12 * * 3', retirerRole, { timezone: "Europe/Paris" }); //Mercredi 12H00
+        cron.schedule('26 12 * * 5', retirerRole, { timezone: "Europe/Paris" }); //Vendredi 12H26
+
+        console.log(`╔═[${client.user.tag}]: Planification des rôles configurée ═╗`);
+    }
+};

@@ -1,0 +1,94 @@
+const {SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder} = require("discord.js")
+const {apxPatchNote, apxGuildId} = require("../../ressources/tickets-ressources/apexServInfo.json")
+const {rlPatchNote, rlGuildId} = require("../../ressources/tickets-ressources/rlServInfo.json")
+const {valoPatchNote, valoGuildId} = require("../../ressources/tickets-ressources/valoServInfo.json")
+const {client} = require("../../index")
+
+module.exports = {
+    cooldown: 5,
+    data: new SlashCommandBuilder()
+        .setName("patchnote")
+        .setDescription("Envoie un message d'annonce sur tout les serveurs")
+        .addStringOption(option => 
+            option
+                .setName("mention")
+                .setDescription("@everyone sur tout les serveurs?")
+                .setRequired(true)
+                .addChoices(
+                    {name: "Everyone", value:'everyone'},
+                    {name:"Here", value: 'here'},
+                    {name: "aucune", value:"none"}
+                ))
+        .setDMPermission(false)
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    category: "utility",
+    async execute(interaction) {
+        const everyonChoice = interaction.options.getString("mention")
+
+        //Gestion de la mention
+        let everyonResponse 
+        if(everyonChoice === 'everyone'){
+            everyonResponse = `|| @everyone ||`
+        }else if(everyonChoice === "here"){
+            everyonResponse ="||  @here ||"
+        }else{
+            everyonResponse = "||_||"
+        }
+
+        //Gestion du modal
+        const modal = new ModalBuilder()
+            .setTitle("Patchnote")
+            .setCustomId(`modalabspatchnote-${interaction.user.id}`);
+
+        const titre = new TextInputBuilder()
+            .setCustomId('title')  // Utiliser 'title' ici
+            .setRequired(true)
+            .setLabel("Ajouter un titre")
+            .setStyle(TextInputStyle.Short);
+    
+        const description = new TextInputBuilder()
+            .setCustomId('description')  // Utiliser 'description' ici
+            .setRequired(true)
+            .setLabel("Message à envoyer sur tous les serveurs.")
+            .setStyle(TextInputStyle.Paragraph);
+        
+
+        const firstActionRow = new ActionRowBuilder().addComponents(titre);
+        const secondActionRow = new ActionRowBuilder().addComponents(description);
+
+
+        modal.addComponents(firstActionRow, secondActionRow);
+        await interaction.showModal(modal);
+
+
+        const filter = (interaction) => interaction.customId === `modalabspatchnote-${interaction.user.id}`;
+
+        interaction.awaitModalSubmit({ filter, time:300000  }).then(async (modalInteraction) => {
+            const titreValue = modalInteraction.fields.getTextInputValue("title")
+            const descriptionValue = modalInteraction.fields.getTextInputValue("description")
+
+            const patchnoteEmbed = new EmbedBuilder()
+                .setTitle(titreValue)
+                .setDescription(descriptionValue)
+                .setAuthor({ name: interaction.user.tag, iconUrl: interaction.user.displayAvatarURL() })
+                .setThumbnail("https://cdn.discordapp.com/attachments/1015973332308463716/1107769058687987832/LOGO_NLS_sans_baseline57.png")
+                .setColor("White")
+                .setTimestamp()
+                .setFooter({ text: 'Envoyer le : '});
+
+            const apxGuild = client.guilds.cache.get(apxGuildId)
+            const rlGuild = client.guilds.cache.get(rlGuildId)
+            const valoGuild = client.guilds.cache.get(valoGuildId)
+
+            const apxChannel = apxGuild.channels.cache.get(apxPatchNote)
+            const rlChannel = rlGuild.channels.cache.get(rlPatchNote)
+            const valoChannel = valoGuild.channels.cache.get(valoPatchNote)
+
+            await apxChannel.send({content: everyonResponse ,embeds: [patchnoteEmbed]})
+            await rlChannel.send({content: everyonResponse ,embeds: [patchnoteEmbed]})
+            await valoChannel.send({content: everyonResponse ,embeds: [patchnoteEmbed]})
+
+            await modalInteraction.reply({content:"Le message a été envoyé.", ephemeral: true});
+        })
+    },
+};

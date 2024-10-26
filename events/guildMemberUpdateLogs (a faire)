@@ -1,0 +1,62 @@
+const { MessageEmbed } = require('discord.js');
+const { muteLogsChannelId1 } = require('../config.json');
+
+async function guildMemberUpdate(oldMember, newMember) {
+    console.log(`Événement guildMemberUpdate déclenché pour ${newMember.user.tag}`);
+
+    // Recherche des rôles de mute
+    const muteRole1 = newMember.guild.roles.cache.find(role => role.name.toLowerCase() === 'muted serveur');
+    if (!muteRole1) {
+        console.error('Le rôle "muted serveur" n\'a pas été trouvé.');
+        return;
+    }
+
+    console.log(`Rôle de mute trouvé : ${muteRole1}`);
+
+    // Vérifie si le membre a été muté ou démuté en tant que "serveur"
+    const wasMutedServer = !oldMember.roles.cache.has(muteRole1.id) && newMember.roles.cache.has(muteRole1.id);
+    const wasUnmutedServer = oldMember.roles.cache.has(muteRole1.id) && !newMember.roles.cache.has(muteRole1.id);
+
+    console.log(`wasMutedServer : ${wasMutedServer}`);
+    console.log(`wasUnmutedServer : ${wasUnmutedServer}`);
+
+    // Envoi des logs pour "serveur" si muté ou démuté
+    if (wasMutedServer) {
+        await sendMuteLog(newMember, 'Mute Serveur', muteLogsChannelId1, true);
+    } else if (wasUnmutedServer) {
+        await sendMuteLog(newMember, 'Unmute Serveur', muteLogsChannelId1, false);
+    }
+}
+
+async function sendMuteLog(member, action, logChannelId, isMute) {
+    console.log(`Tentative d'envoi de log de mute pour ${member.user.tag} - Action : ${action}`);
+    console.log(`ID du canal de log : ${logChannelId}`);
+    const logChannel = member.guild.channels.cache.get(logChannelId);
+    if (!logChannel) {
+        console.error(`Le salon de logs avec l'ID ${logChannelId} est introuvable.`);
+        return;
+    }
+
+    const executor = member.guild.me; // Le bot est l'executor dans ce contexte
+
+    const embed = new MessageEmbed()
+        .setColor(isMute ? '#FF0000' : '#00FF00') // Rouge pour Mute, Vert pour Unmute
+        .setTitle(`${action} - ${member.user.tag}`)
+        .setDescription(`${member.user} a été ${isMute ? 'rendu(e) muet(te)' : 'rétabli(e) sa voix'} par ${executor}.`)
+        .addField('Utilisateur', `${member.user} (${member.user.tag})`, true)
+        .addField('Action', action, true)
+        .setTimestamp();
+
+    console.log('Contenu de l\'embed :', embed); // Ajoutez ce log pour voir la structure de l'embed généré
+
+    try {
+        await logChannel.send({ embeds: [embed] });
+        console.log(`Logs de ${action} envoyés dans le salon ${logChannel.name}`);
+    } catch (error) {
+        console.error(`Erreur lors de l'envoi des logs de ${action} : ${error.message}`);
+    }
+}
+
+module.exports = {
+    guildMemberUpdate
+};

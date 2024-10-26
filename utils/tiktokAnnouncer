@@ -1,0 +1,46 @@
+const { EmbedBuilder } = require('discord.js');
+const { getTikTokAccessToken, checkIfTikTokLive } = require('./tiktokApi');
+const { tiktokChannels, discordChannelId } = require('../config.json');
+
+let liveStatus = {};
+
+async function announceTikTokLive(client, channelName, streamData) {
+    if (!streamData) {
+        console.error(`Aucune donnée de stream trouvée pour ${channelName}.`);
+        return;
+    }
+
+    const embed = new EmbedBuilder()
+        .setTitle(`${channelName} est en live sur TikTok !`)
+        .setDescription(`Regardez le live de ${channelName} maintenant : [Voir le live](https://tiktok.com/@${channelName})`)
+        .setColor("#FF0000")
+        .setThumbnail(streamData.thumbnail_url)
+        .addFields({ name: 'Titre', value: streamData.title });
+
+    const channel = client.channels.cache.get(discordChannelId);
+    if (channel) {
+        await channel.send({ embeds: [embed] });
+    }
+}
+
+async function checkAllTikTokChannels(client) {
+    for (const channelName of tiktokChannels) {
+        const streamData = await checkIfTikTokLive(accessToken, channelName);
+        const isLive = !!streamData;
+
+        if (isLive && !liveStatus[channelName]) {
+            await announceTikTokLive(client, channelName, streamData);
+        }
+
+        liveStatus[channelName] = isLive;
+    }
+}
+
+async function startTikTokAnnouncer(client) {
+    const code = 'YOUR_CODE'; // Vous devez obtenir ce code d'autorisation via le processus de connexion OAuth
+    await getTikTokAccessToken(code);
+    await checkAllTikTokChannels(client); // Vérification initiale
+    setInterval(() => checkAllTikTokChannels(client), 120000); // Vérification toutes les 2 minutes
+}
+
+module.exports = { startTikTokAnnouncer };

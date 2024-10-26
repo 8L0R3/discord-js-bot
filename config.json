@@ -1,0 +1,50 @@
+{
+	"token": "",
+	"clientId": "1299353377708314717",
+	"guildId": "1259473917219962900",
+
+	"authorizedRoleId":"1299068940689080341",
+	"transcriptChannelId":"1299069254469025853",
+	"ownerId":"466643280206102528",
+	"devBotId":"1299172066360299592",
+	"vocalChannelId":"1299069081273761953",
+    "textChannelId":"1299069104715468920",
+    "roleId":"1299068940689080341",
+
+	"musicFolder": "./music",
+	"welcomeChannelId": "1299069025460162621",
+	"goodbyeChannelId": "1299069026936422552",
+	"banLogChannelId": "1299069225322811412",
+	"derogLogChannelId": "1299069231068876940",
+	"revokeLogChannelId": "1299069232285220916",
+	"unbanLogChannelId": "1299069227277222000",
+
+	"logswelcomeChannelId": "1299069239658811423",
+	"goodbyeLogChannelId": "1299069239658811423",
+	"roleretireLogChannelId": "1299069243081490594",
+	"roleaddLogChannelId": "1299069241181474898",
+	"roleCreateLogChannelId": "1299069244419342468",
+	"roleDeleteLogChannelId": "1299069245354672252",
+	"channelPermissionsLogChannelId": "1299069248236294247",
+	"permissionsLogChannelId": "1299069248236294247",
+	"channelCreateLogChannelId": "1299069249544785961",
+	"channelDeleteLogChannelId": "1299069251453456435",
+
+	"clienttwitchId": "",
+    "clientSecret": "",
+    "twitchChannels": ["NLS_Alexis", "suunniight"], 
+    "discordChannelId": "1299069255949746246",
+
+	"tiktokClientKey": "",
+    "tiktokClientSecret": "",
+    "tiktokChannels": ["sunliferp_officiel", "CHANNEL2"],
+    "discordChannelId2": "1299069255949746246",
+    "redirectUri": "http://localhost:3000/callback",
+
+	"waitingVoiceChannelId": "1299069081273761953",
+	"exemptUserId": "466643280206102528",
+	"exemptRoleId": "1299068953435312279",
+	"logChannelId": "1299069255949746246",
+    
+    "exemptUserIds": "466643280206102528"
+}
